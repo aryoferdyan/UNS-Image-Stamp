@@ -4,13 +4,202 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Image Processor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #333;
+        }
+        .upload-container {
+            margin: 20px auto;
+            padding: 20px;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            background-color: #fff;
+            max-width: 500px;
+        }
+        .upload-container.dragover {
+            border-color: #007bff;
+            background-color: #eaf4ff;
+        }
+        .upload-container p {
+            margin: 0;
+            font-size: 16px;
+            color: #666;
+        }
+        input[type="file"], input[type="text"] {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            margin-top: 10px;
+        }
+        .upload-btn {
+            margin-top: 10px;
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .delete-btn {
+            margin-top: 10px;
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: red;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .upload-btn:hover {
+            background-color: #0056b3;
+        }
+        #file-list {
+            margin-top: 10px;
+            text-align: left;
+        }
+        #file-list ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        #file-list ul li {
+            font-size: 14px;
+            color: #333;
+        }
+    </style>
 </head>
 <body>
     <h1>Image Processor</h1>
-    <form action="process.php" method="POST" enctype="multipart/form-data">
-        <label for="images">Upload Images:</label>
-        <input type="file" name="images[]" id="images" accept="image/*" multiple required><br><br>
-        <button type="submit">Process Images</button>
+    <form id="uploadForm" method="POST" enctype="multipart/form-data">
+        <!-- Input untuk Nama File -->
+        <div class="upload-container">
+            <input type="text" name="filename" id="filename" placeholder="Enter your file name" required>
+        </div>
+
+        <!-- Area Drag and Drop -->
+        <div 
+            class="upload-container" 
+            id="drop-area" 
+            ondragover="event.preventDefault();" 
+            ondrop="handleDrop(event);">
+            <p>Drag & Drop your images here or click to browse</p>
+            <input type="file" name="images[]" id="images" accept="image/*" multiple required>
+            <label for="images" class="upload-btn">Browse Files</label>
+        </div>
+        
+        <!-- File List -->
+        <div id="file-list">
+            <ul id="file-names"></ul>
+        </div>
+        
+        <!-- Submit Button -->
+        <button type="button" class="upload-btn" onclick="processImages()">Process Images</button>
+        <button type="button" class="delete-btn" onclick="rundelete()">Clear</button>
     </form>
+
+    
+
+    <!-- Tempat menampilkan output -->
+    <div id="output"></div>
+
+    <script>
+        const dropArea = document.getElementById('drop-area');
+        const fileInput = document.getElementById('images');
+        const fileList = document.getElementById('file-names');
+        const outputDiv = document.getElementById('output');
+
+        function rundelete() {
+        // Pastikan tombol memulai proses penghapusan file
+        if (confirm('Are you sure you want to clear all uploaded and processed files?')) {
+            fetch('delete_files.php?files=1&processed=1', {
+                method: 'GET'
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.text(); // Jika ingin menangkap respons dari server
+                } else {
+                    throw new Error('Failed to delete files. Please try again.');
+                }
+            })
+            .then(data => {
+                console.log(data); // Output untuk debug (bisa dihapus setelah produksi)
+                alert('Files successfully cleared!');
+                location.reload(); // Reload halaman setelah proses selesai
+            })
+            .catch(error => {
+                console.error(error);
+                alert('An error occurred while clearing files. Check console for details.');
+            });
+        }
+    }
+
+        // Menambahkan drag-and-drop functionality
+        dropArea.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dropArea.classList.add('dragover');
+        });
+
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('dragover');
+        });
+
+        dropArea.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropArea.classList.remove('dragover');
+            const files = event.dataTransfer.files;
+            updateFileList(files);
+        });
+
+        // Update file list dan input files
+        function updateFileList(files) {
+            const dataTransfer = new DataTransfer();
+            fileList.innerHTML = '';
+            for (const file of files) {
+                dataTransfer.items.add(file);
+                const li = document.createElement('li');
+                li.textContent = file.name;
+                fileList.appendChild(li);
+            }
+            fileInput.files = dataTransfer.files;
+        }
+
+        // Handle manual file selection
+        fileInput.addEventListener('change', (event) => {
+            updateFileList(fileInput.files);
+        });
+
+        // Fungsi untuk memproses gambar menggunakan AJAX
+        function processImages() {
+            const formData = new FormData(document.getElementById('uploadForm'));
+
+            // Menggunakan AJAX untuk mengirim data ke process.php
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', 'process.php', true);
+
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    // Menampilkan output dari process.php di halaman
+                    outputDiv.innerHTML = xhr.responseText;
+                } else {
+                    outputDiv.innerHTML = 'Error processing images!';
+                }
+            };
+
+            xhr.send(formData);
+        }
+    </script>
 </body>
 </html>

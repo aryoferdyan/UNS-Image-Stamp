@@ -3,18 +3,15 @@ if (isset($_GET['files']) && isset($_GET['processed'])) {
     $uploadDir = 'uploads/';
     $processedDir = 'processed/';
 
-    // Decode parameter files yang berisi path file yang diupload dan diproses
-    $uploadedFiles = json_decode(urldecode($_GET['files']));
-    $processedFiles = json_decode(urldecode($_GET['processed']));
-
-    // Hapus file dari folder uploads
-    foreach ($uploadedFiles as $file) {
+    // Hapus semua file dari folder uploads
+    $uploadedFilesInDir = glob($uploadDir . '*'); // Mendapatkan semua file di folder uploads
+    foreach ($uploadedFilesInDir as $file) {
         if (file_exists($file)) {
-            unlink($file);
+            unlink($file); // Hapus setiap file
         }
     }
 
-    // Hapus file dari folder processed (termasuk file ZIP dan lainnya)
+    // Hapus semua file dari folder processed (termasuk file ZIP dan lainnya)
     $processedFilesInDir = glob($processedDir . '*'); // Mendapatkan semua file di folder processed
     foreach ($processedFilesInDir as $file) {
         if (file_exists($file)) {
@@ -22,8 +19,13 @@ if (isset($_GET['files']) && isset($_GET['processed'])) {
         }
     }
 
-    // Redirect ke halaman utama setelah menghapus file
-    header("Location: http://localhost/formatweb/");
-    exit();
+// Mendapatkan URL dasar (untuk redirect setelah selesai)
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+$baseURL = $protocol . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . '/';
+
+// Redirect ke halaman utama setelah menghapus file
+header("Location: $baseURL");
+exit();
+
 }
 ?>

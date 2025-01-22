@@ -9,16 +9,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!is_dir($processedDir)) mkdir($processedDir);
 
     // Periksa file upload
-    $files = $_FILES['images'];
+    $files = $_FILES['images']; 
     if (empty($files['name'][0])) {
-        die('No files uploaded!');
+        echo 'No files uploaded!';
+        exit;
     }
 
+    // Ambil nama file dari input user
+    $filenameInput = isset($_POST['filename']) ? $_POST['filename'] : 'image'; // Default 'image' jika tidak ada input
     $processedFiles = [];
     $uploadedFiles = [];
+
     foreach ($files['tmp_name'] as $index => $tmpName) {
         $originalName = $files['name'][$index];
-        $uploadedPath = $uploadDir . basename($originalName);
+        $extension = pathinfo($originalName, PATHINFO_EXTENSION);
+        
+        // Menentukan nama baru berdasarkan input pengguna
+        $newFileName = $filenameInput;
+        if (count($files['tmp_name']) > 1) {
+            $newFileName .= " " . ($index + 1); // Menambahkan urutan angka jika lebih dari 1 file
+        }
+        $newFileName .= '.' . $extension;
+
+        $uploadedPath = $uploadDir . basename($newFileName);
 
         // Pindahkan file upload
         if (!move_uploaded_file($tmpName, $uploadedPath)) {
@@ -37,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $origWidth = imagesx($image);
         $origHeight = imagesy($image);
-        $newWidth = 1280;
+        $newWidth = 1024;
         $newHeight = intval(($newWidth / $origWidth) * $origHeight);
 
         $resized = imagecreatetruecolor($newWidth, $newHeight);
@@ -55,9 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         imagecopy($resized, $watermark, $x, $y, 0, 0, $wmWidth, $wmHeight);
         imagedestroy($watermark);
 
-// Konversi ke WebP (lossless)
-$outputPath = $processedDir . pathinfo($originalName, PATHINFO_FILENAME) . '.webp';
-imagewebp($resized, $outputPath, 100); // Menggunakan kualitas 100 untuk lossless
+        // Konversi ke WebP (lossless)
+        $outputPath = $processedDir . pathinfo($newFileName, PATHINFO_FILENAME) . '.webp';
+        imagewebp($resized, $outputPath, 100); // Menggunakan kualitas 100 untuk lossless
 
         // Bersihkan memori
         imagedestroy($image);
@@ -81,12 +94,13 @@ imagewebp($resized, $outputPath, 100); // Menggunakan kualitas 100 untuk lossles
             // Tampilkan link download ZIP
             echo "Processing complete! <a href='$zipPath' download>Download ZIP</a>";
 
-            // Setelah link download, set waktu tunggu 10 detik untuk menghapus file
+            // Mengatur waktu tunggu untuk menghapus file
             echo "<script>
-                setTimeout(function() {
-                    window.location.href = 'delete_files.php?files=" . urlencode(json_encode($uploadedFiles)) . "&processed=" . urlencode(json_encode($processedFiles)) . "';
-                }, 10000); // 10 detik
-                </script>";
+    setTimeout(function() {
+        window.location.href = 'delete_files.php?files=" . urlencode(json_encode($uploadedFiles)) . "&processed=" . urlencode(json_encode($processedFiles)) . "';
+    }, 10000); // 10 detik
+</script>";
+
         } else {
             echo "Failed to create ZIP file.";
         }
