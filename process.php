@@ -92,14 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $zip->close();
 
             // Tampilkan link download ZIP
-            echo "Processing complete! <a href='$zipPath' download>Download ZIP</a>";
+            echo "Processing complete! <a href='$zipPath' download id='download-link'>Download ZIP</a>";
 
-            // Mengatur waktu tunggu untuk menghapus file
-            echo "<script>
-    setTimeout(function() {
-        window.location.href = 'delete_files.php?files=" . urlencode(json_encode($uploadedFiles)) . "&processed=" . urlencode(json_encode($processedFiles)) . "';
-    }, 10000); // 10 detik
-</script>";
 
         } else {
             echo "Failed to create ZIP file.";
