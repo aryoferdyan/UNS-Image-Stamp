@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!is_dir($processedDir)) mkdir($processedDir);
 
     // Periksa file upload
-    $files = $_FILES['images']; 
+    $files = $_FILES['images'];
     if (empty($files['name'][0])) {
         echo 'No files uploaded!';
         exit;
@@ -23,13 +23,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($files['tmp_name'] as $index => $tmpName) {
         $originalName = $files['name'][$index];
         $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-        
+
         // Menentukan nama baru berdasarkan input pengguna
         $newFileName = $filenameInput;
         if (count($files['tmp_name']) > 1) {
             $newFileName .= " " . ($index + 1); // Menambahkan urutan angka jika lebih dari 1 file
         }
-        $newFileName .= '.' . $extension;
+        $newFileName .= '.png'; // Simpan sementara dalam format PNG untuk proses watermark
 
         $uploadedPath = $uploadDir . basename($newFileName);
 
@@ -41,13 +41,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $uploadedFiles[] = $uploadedPath;  // Menyimpan file yang diupload
 
-        // Resize gambar
+        // Buat gambar dari file yang diupload (sementara dalam PNG)
         $image = imagecreatefromstring(file_get_contents($uploadedPath));
         if (!$image) {
             echo "Invalid image file: $originalName<br>";
             continue;
         }
 
+        // Tambahkan watermark
+        $watermark = imagecreatefrompng($watermarkFile);
+        $wmWidth = imagesx($watermark);
+        $wmHeight = imagesy($watermark);
+
+        // Sesuaikan ukuran watermark agar proporsional (misalnya, 15% dari lebar gambar)
+        $wmNewWidth = imagesx($image) * 0.15; // 15% dari lebar gambar
+        $wmNewHeight = ($wmNewWidth / $wmWidth) * $wmHeight; // Pertahankan rasio asli watermark
+
+        // Membuat gambar watermark yang baru dengan ukuran proporsional
+        $resizedWatermark = imagescale($watermark, $wmNewWidth, $wmNewHeight);
+        imagedestroy($watermark); // Hapus watermark asli setelah diubah ukurannya
+
+       // Pindahkan watermark 5% dari panjang gambar untuk $x dan 5% dari lebar gambar untuk $y
+        $x = imagesx($image) - $wmNewWidth - (imagesx($image) * 0.05); // 5% dari lebar gambar untuk jarak dari kanan
+        $y = imagesy($image) - $wmNewHeight - (imagesy($image) * 0.05); // 5% dari tinggi gambar untuk jarak dari bawah
+
+
+        // Menempelkan watermark yang sudah diubah ukurannya pada gambar
+        imagecopy($image, $resizedWatermark, $x, $y, 0, 0, $wmNewWidth, $wmNewHeight);
+        imagedestroy($resizedWatermark); // Hapus watermark yang telah diubah ukurannya
+
+        // Resize gambar setelah watermark
         $origWidth = imagesx($image);
         $origHeight = imagesy($image);
         $newWidth = 1024;
@@ -55,28 +78,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $resized = imagecreatetruecolor($newWidth, $newHeight);
         imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $origWidth, $origHeight);
-
-        // Tambahkan watermark
-        $watermark = imagecreatefrompng($watermarkFile);
-        $wmWidth = imagesx($watermark);
-        $wmHeight = imagesy($watermark);
-
-        // Pindahkan watermark 20 px ke kiri dan 20 px ke atas
-        $x = $newWidth - $wmWidth - 10 - 20; // 10 px dari tepi kanan, 20 px lebih ke kiri
-        $y = $newHeight - $wmHeight - 10 - 20; // 10 px dari tepi bawah, 20 px lebih ke atas
-
-        imagecopy($resized, $watermark, $x, $y, 0, 0, $wmWidth, $wmHeight);
-        imagedestroy($watermark);
-
-        // Konversi ke WebP (lossless)
-        $outputPath = $processedDir . pathinfo($newFileName, PATHINFO_FILENAME) . '.webp';
-        imagewebp($resized, $outputPath, 100); // Menggunakan kualitas 100 untuk lossless
-
-        // Bersihkan memori
         imagedestroy($image);
+
+        // Konversi gambar yang telah di-resize ke WebP
+        $webpPath = $processedDir . pathinfo($newFileName, PATHINFO_FILENAME) . '.webp';
+        imagewebp($resized, $webpPath, 90); // Simpan dengan kualitas 90
         imagedestroy($resized);
 
-        $processedFiles[] = $outputPath;  // Menyimpan file yang telah diproses
+        $processedFiles[] = $webpPath;  // Menyimpan file yang telah diproses
     }
 
     // Buat ZIP jika ada file berhasil diproses
@@ -93,8 +102,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Tampilkan link download ZIP
             echo "Processing complete! <a href='$zipPath' download id='download-link'>Download ZIP</a>";
-
-
         } else {
             echo "Failed to create ZIP file.";
         }
