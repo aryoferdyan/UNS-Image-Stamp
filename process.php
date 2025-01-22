@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Konversi ke WebP (lossless)
         $outputPath = $processedDir . pathinfo($newFileName, PATHINFO_FILENAME) . '.webp';
-        imagewebp($resized, $outputPath, 80); // Menggunakan kualitas 100 untuk lossless
+        imagewebp($resized, $outputPath, 100); // Menggunakan kualitas 100 untuk lossless
 
         // Bersihkan memori
         imagedestroy($image);
