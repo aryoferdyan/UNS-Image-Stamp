@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,9 +13,47 @@
             padding: 20px;
             background-color: #f9f9f9;
         }
+
         h1 {
             color: #333;
         }
+
+        input[type="checkbox"] {
+            appearance: none;
+            /* Hilangkan gaya bawaan browser */
+            width: 16px;
+            height: 16px;
+            border: 2px solid #007bff;
+            /* Warna biru untuk border */
+            border-radius: 4px;
+            /* Membuat checkbox agak membulat */
+            outline: none;
+            cursor: pointer;
+            background-color: white;
+            display: inline-block;
+            position: relative;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        input[type="checkbox"]:checked {
+            background-color: #007bff;
+            /* Warna biru saat tercentang */
+            border-color: #0056b3;
+            /* Border sedikit lebih gelap */
+        }
+
+        input[type="checkbox"]:checked::before {
+            content: '✔';
+            /* Tanda centang */
+            display: block;
+            color: white;
+            font-size: 12px;
+            text-align: center;
+            line-height: 16px;
+            /* Sesuaikan dengan tinggi checkbox */
+        }
+
         .upload-container {
             margin: 20px auto;
             padding: 20px;
@@ -23,16 +62,20 @@
             background-color: #fff;
             max-width: 500px;
         }
+
         .upload-container.dragover {
             border-color: #007bff;
             background-color: #eaf4ff;
         }
+
         .upload-container p {
             margin: 0;
             font-size: 16px;
             color: #666;
         }
-        input[type="file"], input[type="text"] {
+
+        input[type="file"],
+        input[type="text"] {
             display: block;
             width: 100%;
             padding: 10px;
@@ -42,6 +85,7 @@
             box-sizing: border-box;
             margin-top: 10px;
         }
+
         .upload-btn {
             margin-top: 10px;
             display: inline-block;
@@ -53,6 +97,7 @@
             border-radius: 5px;
             cursor: pointer;
         }
+
         .delete-btn {
             margin-top: 10px;
             display: inline-block;
@@ -64,23 +109,28 @@
             border-radius: 5px;
             cursor: pointer;
         }
+
         .upload-btn:hover {
             background-color: #0056b3;
         }
+
         #file-list {
             margin-top: 10px;
             text-align: left;
         }
+
         #file-list ul {
             list-style-type: none;
             padding: 0;
         }
+
         #file-list ul li {
             font-size: 14px;
             color: #333;
         }
     </style>
 </head>
+
 <body>
     <h1>Image Processor UNS</h1>
     <form id="uploadForm" method="POST" enctype="multipart/form-data">
@@ -90,14 +140,14 @@
         </div>
 
         <!-- Area Drag and Drop -->
-        <div 
-            class="upload-container" 
-            id="drop-area" 
-            ondragover="event.preventDefault();" 
-            ondrop="handleDrop(event);">
+        <div class="upload-container" id="drop-area" ondragover="event.preventDefault();" ondrop="handleDrop(event);">
             <p>Drag & Drop your images here or click to browse</p>
             <input type="file" name="images[]" id="images" accept="image/*" multiple required>
-            <label for="images" class="upload-btn">Browse Files</label>
+            <!-- File List -->
+            <div id="file-list">
+                <ul id="file-names"></ul>
+            </div>
+            <!-- <label for="images" class="upload-btn">Browse Files</label> -->
         </div>
 
         <!-- Checklist Options -->
@@ -106,12 +156,8 @@
             <label><input type="checkbox" name="stamp" checked> Stamp/Watermark</label>
             <label><input type="checkbox" name="webp" checked> Convert to WebP</label>
         </div>
-        
 
-        <!-- File List -->
-        <div id="file-list">
-            <ul id="file-names"></ul>
-        </div>
+
 
         <!-- Submit Button -->
         <button type="button" class="upload-btn" onclick="processImages()">Process Images</button>
@@ -125,4 +171,5 @@
 
     <script src="script.js"></script>
 </body>
+
 </html>
