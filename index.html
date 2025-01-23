@@ -99,26 +99,30 @@
             <input type="file" name="images[]" id="images" accept="image/*" multiple required>
             <label for="images" class="upload-btn">Browse Files</label>
         </div>
+
+        <!-- Checklist Options -->
+        <div class="upload-container">
+            <label><input type="checkbox" name="resize" checked> Resize</label>
+            <label><input type="checkbox" name="stamp" checked> Stamp/Watermark</label>
+            <label><input type="checkbox" name="webp" checked> Convert to WebP</label>
+        </div>
         
+
         <!-- File List -->
         <div id="file-list">
             <ul id="file-names"></ul>
         </div>
-        
+
         <!-- Submit Button -->
         <button type="button" class="upload-btn" onclick="processImages()">Process Images</button>
         <button type="button" class="delete-btn" onclick="rundelete()">Clear</button>
     </form>
-    
-    
+
     <!-- Tempat menampilkan output -->
     <br>
     <div id="output"></div>
     <div id="timer"></div>
 
-
     <script src="script.js"></script>
-
-
 </body>
 </html>

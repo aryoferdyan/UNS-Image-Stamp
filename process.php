@@ -20,6 +20,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $processedFiles = [];
     $uploadedFiles = [];
 
+    // Periksa opsi checklist
+    $doResize = isset($_POST['resize']);
+    $doStamp = isset($_POST['stamp']);
+    $doWebP = isset($_POST['webp']);
+
     foreach ($files['tmp_name'] as $index => $tmpName) {
         $originalName = $files['name'][$index];
         $extension = pathinfo($originalName, PATHINFO_EXTENSION);
@@ -48,44 +53,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             continue;
         }
 
-        // Tambahkan watermark
-        $watermark = imagecreatefrompng($watermarkFile);
-        $wmWidth = imagesx($watermark);
-        $wmHeight = imagesy($watermark);
+        // Tambahkan watermark jika opsi dicentang
+        if ($doStamp) {
+            $watermark = imagecreatefrompng($watermarkFile);
+            $wmWidth = imagesx($watermark);
+            $wmHeight = imagesy($watermark);
 
-        // Sesuaikan ukuran watermark agar proporsional (misalnya, 15% dari lebar gambar)
-        $wmNewWidth = imagesx($image) * 0.15; // 15% dari lebar gambar
-        $wmNewHeight = ($wmNewWidth / $wmWidth) * $wmHeight; // Pertahankan rasio asli watermark
+            // Sesuaikan ukuran watermark agar proporsional (misalnya, 15% dari lebar gambar)
+            $wmNewWidth = imagesx($image) * 0.15; // 15% dari lebar gambar
+            $wmNewHeight = ($wmNewWidth / $wmWidth) * $wmHeight; // Pertahankan rasio asli watermark
 
-        // Membuat gambar watermark yang baru dengan ukuran proporsional
-        $resizedWatermark = imagescale($watermark, $wmNewWidth, $wmNewHeight);
-        imagedestroy($watermark); // Hapus watermark asli setelah diubah ukurannya
+            // Membuat gambar watermark yang baru dengan ukuran proporsional
+            $resizedWatermark = imagescale($watermark, $wmNewWidth, $wmNewHeight);
+            imagedestroy($watermark); // Hapus watermark asli setelah diubah ukurannya
 
-       // Pindahkan watermark 5% dari panjang gambar untuk $x dan 5% dari lebar gambar untuk $y
-        $x = imagesx($image) - $wmNewWidth - (imagesx($image) * 0.05); // 5% dari lebar gambar untuk jarak dari kanan
-        $y = imagesy($image) - $wmNewHeight - (imagesy($image) * 0.05); // 5% dari tinggi gambar untuk jarak dari bawah
+            // Pindahkan watermark 5% dari panjang gambar untuk $x dan 5% dari lebar gambar untuk $y
+            $x = imagesx($image) - $wmNewWidth - (imagesx($image) * 0.05); // 5% dari lebar gambar untuk jarak dari kanan
+            $y = imagesy($image) - $wmNewHeight - (imagesy($image) * 0.05); // 5% dari tinggi gambar untuk jarak dari bawah
 
+            // Menempelkan watermark yang sudah diubah ukurannya pada gambar
+            imagecopy($image, $resizedWatermark, $x, $y, 0, 0, $wmNewWidth, $wmNewHeight);
+            imagedestroy($resizedWatermark); // Hapus watermark yang telah diubah ukurannya
+        }
 
-        // Menempelkan watermark yang sudah diubah ukurannya pada gambar
-        imagecopy($image, $resizedWatermark, $x, $y, 0, 0, $wmNewWidth, $wmNewHeight);
-        imagedestroy($resizedWatermark); // Hapus watermark yang telah diubah ukurannya
+        // Resize gambar jika opsi dicentang
+        if ($doResize) {
+            $origWidth = imagesx($image);
+            $origHeight = imagesy($image);
+            $newWidth = 1024;
+            $newHeight = intval(($newWidth / $origWidth) * $origHeight);
 
-        // Resize gambar setelah watermark
-        $origWidth = imagesx($image);
-        $origHeight = imagesy($image);
-        $newWidth = 1024;
-        $newHeight = intval(($newWidth / $origWidth) * $origHeight);
+            $resized = imagecreatetruecolor($newWidth, $newHeight);
+            imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $origWidth, $origHeight);
+            imagedestroy($image);
 
-        $resized = imagecreatetruecolor($newWidth, $newHeight);
-        imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $origWidth, $origHeight);
-        imagedestroy($image);
+            // Ganti gambar asli dengan gambar yang sudah di-resize
+            $image = $resized;
+        }
 
-        // Konversi gambar yang telah di-resize ke WebP
-        $webpPath = $processedDir . pathinfo($newFileName, PATHINFO_FILENAME) . '.webp';
-        imagewebp($resized, $webpPath, 90); // Simpan dengan kualitas 90
-        imagedestroy($resized);
+        // Konversi gambar ke WebP jika opsi dicentang
+        if ($doWebP) {
+            $webpPath = $processedDir . pathinfo($newFileName, PATHINFO_FILENAME) . '.webp';
+            imagewebp($image, $webpPath, 90); // Simpan dengan kualitas 90
+            $processedFiles[] = $webpPath;  // Menyimpan file yang telah diproses
+        } else {
+            // Jika tidak dikonversi ke WebP, simpan dalam format PNG
+            $processedPath = $processedDir . basename($newFileName);
+            imagepng($image, $processedPath);
+            $processedFiles[] = $processedPath;  // Menyimpan file yang telah diproses
+        }
 
-        $processedFiles[] = $webpPath;  // Menyimpan file yang telah diproses
+        imagedestroy($image); // Hapus resource gambar setelah selesai
     }
 
     // Buat ZIP jika ada file berhasil diproses

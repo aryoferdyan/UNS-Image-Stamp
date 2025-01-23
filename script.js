@@ -92,7 +92,7 @@ fileInput.addEventListener('change', (event) => {
 // Fungsi untuk memproses gambar menggunakan AJAX
 function processImages() {
     // Tampilkan pesan "Stamping your image...." di dalam div #output
-    outputDiv.innerHTML = 'Stamping your image....';
+    outputDiv.innerHTML = 'Process your image....';
 
     const formData = new FormData(document.getElementById('uploadForm'));
 
