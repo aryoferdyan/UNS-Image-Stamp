@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Ambil nama file dari input user
-    $filenameInput = isset($_POST['filename']) ? $_POST['filename'] : 'image'; // Default 'image' jika tidak ada input
+    $filenameInput = isset($_POST['filename']) && !empty(trim($_POST['filename'])) ? $_POST['filename'] : null;
     $processedFiles = [];
     $uploadedFiles = [];
 

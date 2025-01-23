@@ -88,6 +88,16 @@ fileInput.addEventListener("change", (event) => {
   updateFileList(fileInput.files);
 });
 
+function validateForm() {
+  const filenameInput = document.getElementById('filename');
+  if (!filenameInput.value.trim()) {
+      alert('Please enter a file name.'); // Pesan peringatan
+      filenameInput.focus(); // Fokuskan ke input yang kosong
+      return false; // Batalkan proses form
+  }
+  return true; // Lanjutkan jika validasi lolos
+}
+
 // Fungsi untuk memproses gambar menggunakan AJAX
 function processImages() {
   // Tampilkan pesan "Stamping your image...." di dalam div #output
