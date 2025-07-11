@@ -2,7 +2,7 @@
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $uploadDir = 'uploads/';
     $processedDir = 'processed/';
-    $watermarkFile = 'assets/watermark.png';
+    $watermarkFile = 'assets/uns-logo2.png';
 
     // Pastikan direktori ada
     if (!is_dir($uploadDir)) mkdir($uploadDir);
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $wmHeight = imagesy($watermark);
 
             // Sesuaikan ukuran watermark agar proporsional (misalnya, 15% dari lebar gambar)
-            $wmNewWidth = imagesx($image) * 0.15; // 15% dari lebar gambar
+            $wmNewWidth = imagesx($image) * 0.12; // 15% dari lebar gambar
             $wmNewHeight = ($wmNewWidth / $wmWidth) * $wmHeight; // Pertahankan rasio asli watermark
 
             // Membuat gambar watermark yang baru dengan ukuran proporsional
@@ -68,8 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             imagedestroy($watermark); // Hapus watermark asli setelah diubah ukurannya
 
             // Pindahkan watermark 5% dari panjang gambar untuk $x dan 5% dari lebar gambar untuk $y
-            $x = imagesx($image) - $wmNewWidth - (imagesx($image) * 0.05); // 5% dari lebar gambar untuk jarak dari kanan
-            $y = imagesy($image) - $wmNewHeight - (imagesy($image) * 0.05); // 5% dari tinggi gambar untuk jarak dari bawah
+            $x = imagesx($image) * 0.02; // 5% dari lebar gambar untuk jarak dari kiri
+            $y = imagesy($image) * 0.02; // 5% dari tinggi gambar untuk jarak dari atas
 
             // Menempelkan watermark yang sudah diubah ukurannya pada gambar
             imagecopy($image, $resizedWatermark, $x, $y, 0, 0, $wmNewWidth, $wmNewHeight);
